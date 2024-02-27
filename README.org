@@ -1,0 +1,8 @@
+#+title: Studybud
+
+Este é um projeto de aprendizado de Django.
+
+Nada interessante para ver aqui.
+
+Para acompanhar o progresso, [[./notas.org][veja as minhas anotações]].
+

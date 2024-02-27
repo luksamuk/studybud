@@ -1,0 +1,43 @@
+#+title: Tutorial de Django Framework
+
+Link: https://www.youtube.com/watch?v=PtQiiknWUcI
+
+* Instalação e setup
+
+Certifique-se de  ter o virtualenv  instalado. No  Linux, o virtualenv  pode ser
+instalado usando pacotes da própria distribuição.
+
+** Criando o virtualenv
+
+Vá até a pasta do projeto e crie um virtualenv.
+
+#+begin_src bash
+virtualenv env
+source env/bin/activate
+#+end_src
+
+** Criando o projeto
+
+Use o pip do próprio virtualenv para instalar as dependências; instale o Django.
+
+#+begin_src bash
+pip install django
+#+end_src
+
+Em seguida, crie o projeto com o comando django-admin.
+
+#+begin_src bash
+django-admin startproject studybud
+cd studybud
+#+end_src
+
+** Executando o servidor
+
+#+begin_src bash
+python manage.py runserver
+#+end_src
+
+Será  mostrado  um  warning  notificando  sobre  migrations  não-aplicadas.  Por
+enquanto, tudo bem com isso, até termos um banco de dados.
+
+O projeto provavelmente estará executando na porta 8000.
