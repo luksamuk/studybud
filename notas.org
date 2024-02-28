@@ -1,6 +1,17 @@
 #+title: Tutorial de Django Framework
+#+startup: content
 
 Link: https://www.youtube.com/watch?v=PtQiiknWUcI
+
+* Sobre Django
+
+Framework opinionated para Python.
+
+Usa arquitetura MVT (Model-View-Template). Comparado  a MVC, não há controllers;
+os controllers ficam por conta do framework.
+
+As regras  de negócio vivem  nas views.  Criamos templates para  renderização do
+projeto, e os models servem para comunicação com o banco de dados, como esperado.
 
 * Instalação e setup
 
@@ -41,3 +52,270 @@ Será  mostrado  um  warning  notificando  sobre  migrations  não-aplicadas.  P
 enquanto, tudo bem com isso, até termos um banco de dados.
 
 O projeto provavelmente estará executando na porta 8000.
+
+** Sobre os arquivos gerados
+
+- =manage.py=: Permite executar comandso do Django.
+- =db.sqlite3=:  Banco de  dados padrão  SQLite. Em  produção, pode-se  utilizar
+  outros bancos, inclusive bancos NoSQL.
+- =studybud/=
+  - =wsgi.py=: Web Server Gateway Interface. Constitui o servidor web em si.
+  - =urls.py=: Responsável pelas rotas do projeto, lista rotas do servidor.
+  - =asgi.py=: Servidor  web assíncrono, novo  padrão a ser utilizado.  Não será
+    utilizado neste projeto.
+  - =settings.py=: Cerne de configuração do projeto.
+
+* Mudando o template principal
+
+Vamos criar uma aplicação no nosso projeto, chamada =base=.
+
+#+begin_src bash
+python manage.py startapp base
+#+end_src
+
+Isso criará uma pasta =studybud/base=, do  qual o projeto Django ainda nada sabe
+a respeito. Os arquivos criados são:
+
+- =views.py=: Views para  quando alguém acessa uma rota; funções  ou classes que
+  engatilham  queries a  serem executadas  no  banco de  dados, renderização  de
+  templates, etc.
+- =models.py=: Representam entidades do banco de dados.
+- =admin.py=: Painel administrativo.
+- =apps.py=: Cerne de configuração do aplicativo.
+
+Voltando  a  =settings.py=,  precisamos  conectar  nosso  novo  app  ao  projeto
+Django.  Alteraremos =INSTALLED_APPS=,  adicionando  a classe  principal do  app
+=base= ao final:
+
+#+begin_src python
+INSTALLED_APPS = [
+    "django.contrib.admin",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
+    "base.apps.BaseConfig",
+]
+#+end_src
+
+Veja que =base.apps.BaseConfig=  usa uma nomenclatura que segue  a estrutura das
+pastas e  arquivos do projeto =base=,  assim como a classe  existente no arquivo
+=base/apps.py= .
+
+* URLs, routing e views
+
+Em um projeto, as views tipicamente são configuradas no arquivo =views.py= de um
+app.
+
+Primeiramente,      para       avaliarmos      a      lógica,       vamos      a
+=studybud/urls.py=. Adicionaremos uma  rota para a raiz do projeto  e outra para
+nosso app.
+
+Usaremos views baseadas em funções aqui.  Criaremos uma função chamada =home=, e
+vamos passar a ela  como parâmetro um objeto =request=. Ela  ficará na rota raiz
+da aplicação (=/=), que será representada na como um caminho de string vazia.
+
+Vamos criar também  uma rota =/room/=, que será igualmente  representada por uma
+função =room=.
+
+Claro, tudo isso é para debug, **não deveríamos estar criando views aqui.**
+
+#+begin_src python
+from django.contrib import admin
+from django.urls import path
+from django.http import HttpResponse
+
+
+def home(request):
+    return HttpResponse("Home page")
+
+
+def room(request):
+    return HttpResponse("ROOM")
+
+
+urlpatterns = [
+    path("admin/", admin.site.urls),
+    path("", home),
+    path("room/", room),
+]
+#+end_src
+
+** Criando views, de verdade
+
+Remova as views e a importação de =HttpResponse=.
+
+Vá até =base/views.py= e altere o arquivo:
+
+#+begin_src python
+from django.shortcuts import render
+from django.http import HttpResponse
+
+
+def home(request):
+    return HttpResponse("Home page")
+
+
+def room(request):
+    return HttpResponse("ROOM")
+#+end_src
+
+Em  seguida,  **crie** o  arquivo  =base/urls.py=.  Ele  servirá de  arquivo  de
+roteamento para o nosso app, para que o mesmo fique bem-estruturado.
+
+
+Veja que nossas views podem ter **nomes** (atributo =name=), o que pode ajudar a
+referenciá-las dinamicamente.
+
+#+begin_src python
+from django.urls import path
+from . import views
+
+urlpatterns = [
+    path("", views.home, name="home"),
+    path("room/", views.room, name="room"),
+]
+#+end_src
+
+Finalmente, vamos  configurar nossas  URLs da nossa  aplicação =base=,  para que
+sejam  acessíveis. Volte  a  =studybud/urls.py= e  incluir  o =urlpatterns=  que
+declaramos acima.
+
+#+begin_src python
+from django.contrib import admin
+from django.urls import path, include
+
+urlpatterns = [
+    path("admin/", admin.site.urls),
+    path("", include("base.urls")),
+]
+#+end_src
+
+* Templates
+
+Crie uma nova pasta na raiz  do projeto Django, chamada =templates=. Em seguida,
+crie o arquivo =templates/home.html=.
+
+**NOTA:**   Estamos   definindo  arquivos   HTML   sem   uma  estrutura   padrão
+propositalmente aqui.
+
+#+begin_src html
+<h1>Home Template</h1>
+#+end_src
+
+Adicione também um arquivo =templates/room.html=.
+
+#+begin_src html
+<h1>Room Template</h1>
+#+end_src
+
+Agora, vamos retornar esses templates dentro das nossas views.
+
+Em  =settings.py=, localize  a  variável =TEMPLATES=.  Na propriedade  ="DIRS"=,
+adicione o caminho relativo da pasta =templates=:
+
+#+begin_src python
+TEMPLATES = [
+    {
+        ...
+        "DIRS": [
+            BASE_DIR / "templates",
+        ],
+        ...
+    },
+]
+#+end_src
+
+Volte  para =base/views.py=,  remova o  uso de  =HttpResponse=, e  referencie os
+templates.  Isso será  feito com  a função  =render=, já  importada a  partir de
+=django.shortcuts= quando criamos o app:
+
+#+begin_src python
+from django.shortcuts import render
+from django.http import HttpRequest, HttpResponse
+
+
+def home(request: HttpRequest) -> HttpResponse:
+    return render(request, "home.html")
+
+
+def room(request: HttpRequest) -> HttpResponse:
+    return render(request, "room.html")
+#+end_src
+
+** Herança de Templates
+
+Caso você  precise de recursos  como uma barra de  navegação ou algo  similar, é
+interessante ter templates sendo renderizados dentro de outros templates.
+
+Dessa forma, podemos incluir partes de templates dentro de outros templates.
+
+Crie um arquivo =templates/navbar.html=. Vamos criar uma navbar bem fajuta.
+
+#+begin_src html
+<a href="/">
+  <h1>LOGO</h1>
+</a>
+
+<hr>
+#+end_src
+
+*** Incluindo templates
+
+Para que essa  página seja vista em  todas as outras páginas, podemos  ir até os
+nossos  outros  arquivos  HTML  e  incluí-la.  Por  exemplo,  podemos  modificar
+=home.html=:
+
+#+begin_src html
+{% include 'navbar.html' %}
+<h1>Home Template</h1>
+#+end_src
+
+*** Herdando templates
+
+Como a  navbar deve ser  vista em  todas as páginas,  podemos fazer de  forma um
+pouco diferente. Crie um arquivo =templates/main.html=, que servirá de *wrapper*
+para todos os nossos templates.
+
+Na   tag   =body=,  adicione   a   tag   de   criação   de  um   bloco   chamado
+=content=. Adicionalmente, acima dele, inclua o template da navbar criado.
+
+#+begin_src html
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv='X-UA-Compatible' content='IE=edge'>
+    <title>StudyBud</title>
+    <meta name='viewport' content='width=device-width, initial-scale=1'>
+    <!-- <link rel='stylesheet' type='text/css' media='screen' href='main.css'> -->
+  </head>
+  <body>
+    {% include 'navbar.html' %}
+    
+    {% block content %}
+    
+    {% endblock %}
+  </body>
+</html>
+#+end_src
+
+Agora, podemos  ir em =templates/home.html=,  e estender o  template, informando
+também o conteúdo do bloco =content= declarado:
+
+#+begin_src html
+{% extends 'main.html' %}
+
+{% block content %}
+<h1>Home Template</h1>
+{% endblock content %}
+#+end_src
+
+Façamos o mesmo para =templates/room.html=:
+
+*** Mais informações sobre templates
+
+A engine de templates do Django é  similar ao Jinja. A documentação para a mesma
+pode ser vista em https://docs.djangoproject.com/en/5.0/topics/templates/.
+
